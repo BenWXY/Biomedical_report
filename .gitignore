@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+qilu_venv/
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3.json
+.cache/
+reports/*.html
+reports/HER2_*.md
+reports/PD_L1_*.md
+written_test.md

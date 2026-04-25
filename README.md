@@ -1,0 +1,129 @@
+# Research Intelligence Prototype
+
+Chinese documentation is available in [README_zh.md](README_zh.md).
+
+This project implements a runnable Python prototype for target-centric biomedical competitive intelligence. It collects data from public sources, normalizes the records, caches query results, and generates structured Markdown/HTML reports.
+
+## Features
+
+- Pluggable data source architecture.
+- ClinicalTrials.gov v2 API collector.
+- PubMed E-utilities collector.
+- Offline demo fixtures for deterministic grading and local testing.
+- SQLite cache with TTL and report version history.
+- Markdown and HTML report output, with Chinese as the default report language.
+- Optional LLM analysis layer for target overview, pipeline summary, research dynamics, and competitive assessment.
+- Inline SVG charts for trial phase distribution and publication trend.
+- Basic logging and resilient network/API error handling.
+- Unit tests for normalization, caching, source orchestration, and report generation.
+
+## Quick Start
+
+Create a fresh virtual environment from the project root. The commands below install the app and its runtime dependencies, including the OpenAI Python SDK used for optional LLM analysis.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
+If PowerShell blocks activation scripts, use the venv interpreter directly:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -e .
+```
+
+Generate a deterministic offline demo report:
+
+```powershell
+python -m research_intel --target HER2 --offline --format both
+```
+
+Generated files are written to `reports/`. Reports are generated in Chinese by default.
+
+To generate the report in English, pass `--language english`:
+
+```powershell
+python -m research_intel --target HER2 --offline --format both --language english
+```
+
+To run against live public APIs:
+
+```powershell
+python -m research_intel --target "PD-L1" --format both
+```
+
+The same language option works with live API runs:
+
+```powershell
+python -m research_intel --target "PD-L1" --format both --language english
+```
+
+Optional PubMed email/tool identification can be configured with environment variables:
+
+```powershell
+$env:PUBMED_EMAIL="your.email@example.com"
+$env:PUBMED_TOOL="research-intel-prototype"
+```
+
+To use LLM-generated analysis in the four main report sections, configure an OpenAI-compatible chat API key:
+
+```powershell
+$env:OPENAI_API_KEY="your-api-key"
+```
+
+DashScope's OpenAI-compatible endpoint is also supported:
+
+```powershell
+$env:DASHSCOPE_API_KEY="your-dashscope-api-key"
+$env:RESEARCH_INTEL_LLM_MODEL="qwen-plus"
+$env:RESEARCH_INTEL_LLM_ENDPOINT="https://dashscope.aliyuncs.com/compatible-mode/v1"
+```
+
+Optional LLM settings:
+
+```powershell
+$env:RESEARCH_INTEL_LLM_MODEL="gpt-4o-mini"
+$env:RESEARCH_INTEL_LLM_ENDPOINT="https://api.openai.com/v1"
+```
+
+No API keys are hard-coded. If the LLM key is not configured or the LLM call fails, the report falls back to deterministic local summaries.
+
+## Tests
+
+```powershell
+python -m unittest discover -s tests
+```
+
+You can also use the installed console command:
+
+```powershell
+research-intel --target HER2 --offline --format markdown
+```
+
+Useful CLI options:
+
+- `--format markdown|html|both` controls output file type.
+- `--language chinese|english` controls report language. The default is `chinese`.
+
+## Project Layout
+
+```text
+research_intel/
+  __main__.py        CLI entrypoint
+  app.py             Pipeline orchestration
+  cache.py           SQLite cache and report versions
+  config.py          Settings loaded from environment
+  http.py            Resilient stdlib HTTP client
+  llm.py             Optional LLM report analyzer
+  models.py          Normalized dataclasses
+  report.py          Markdown/HTML report renderer
+  sources/           Pluggable collectors
+docs/
+  architecture.md    System design document
+reports/
+  sample_HER2.md     Example report generated from offline fixtures
+tests/
+```

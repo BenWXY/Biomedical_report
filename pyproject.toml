@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "research-intel-prototype"
+version = "0.1.0"
+description = "Target-centric biomedical competitive intelligence prototype."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["openai>=1.0.0"]
+
+[project.scripts]
+research-intel = "research_intel.__main__:main"
+
+[tool.setuptools]
+packages = ["research_intel", "research_intel.sources"]

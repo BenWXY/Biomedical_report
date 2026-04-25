@@ -1,0 +1,2 @@
+[console_scripts]
+research-intel = research_intel.__main__:main
