@@ -9,7 +9,7 @@ This project implements a runnable Python prototype for target-centric biomedica
 - Pluggable data source architecture.
 - ClinicalTrials.gov v2 API collector.
 - PubMed E-utilities collector.
-- Offline demo fixtures for deterministic grading and local testing.
+- Offline demo fixtures for deterministic grading and local testing without public API or LLM calls.
 - SQLite cache with TTL and report version history.
 - Markdown and HTML report output, with Chinese as the default report language.
 - HTML reports convert common Markdown formatting from LLM-generated text into real HTML.
@@ -36,13 +36,13 @@ If PowerShell blocks activation scripts, use the venv interpreter directly:
 .\.venv\Scripts\python.exe -m pip install -e .
 ```
 
-Generate a deterministic offline demo report:
+Generate a deterministic offline demo report. Offline mode uses the built-in demo records only; it does not call public APIs or the LLM, even when an LLM API key is configured.
 
 ```powershell
 python -m research_intel --target HER2 --offline --format both
 ```
 
-Generated files are written to `reports/`. Reports are generated in Chinese by default. Sample HER2 reports are included at `reports/sample_HER2.md` and `reports/sample_HER2.html`.
+Generated files are written to `reports/`. Reports are generated in Chinese by default. Offline HER2 sample reports are included at `reports/sample_HER2_offline.md` and `reports/sample_HER2_offline.html`; live/online HER2 sample reports are included at `reports/sample_HER2.md` and `reports/sample_HER2.html`.
 
 To generate the report in English, pass `--language english`:
 
@@ -106,8 +106,11 @@ research-intel --target HER2 --offline --format markdown
 
 Useful CLI options:
 
+- `--target HER2` sets the target or biomarker to research.
+- `--offline` uses built-in demo records only; it does not call public APIs or the LLM.
 - `--format markdown|html|both` controls output file type.
 - `--language chinese|english` controls report language. The default is `chinese`.
+- `--verbose` enables debug logging.
 
 ## Adding Data Sources
 
@@ -125,8 +128,12 @@ The current pipeline automatically deduplicates and renders `TrialRecord` and `P
 
 ```text
 .
+  .gitignore         Git ignore rules for local/runtime artifacts
   pyproject.toml     Package metadata and console script definition
-  requirements.txt   Runtime dependency list
+  requirements.txt   Runtime dependency list for pip installs
+  README.md          Main English quick-start documentation
+  README_detailed.md Detailed English documentation
+  README_zh.md       Chinese documentation
   written_test.md    Original project requirements
 research_intel/
   __init__.py        Package marker
@@ -147,9 +154,11 @@ docs/
   architecture.md       System design document
   architecture_zh.md    Chinese system design document
 reports/
-  sample_HER2.md        Example Markdown report generated from offline fixtures
-  sample_HER2.html      Example HTML report generated from offline fixtures
+  sample_HER2.md        Example Markdown report generated from live/online sources
+  sample_HER2.html      Example HTML report generated from live/online sources
+  sample_HER2_offline.md / .html  Example reports generated from offline fixtures
   *.md / *.html         Generated report outputs
+  *.sqlite3*            Local cache/report metadata databases
 tests/
   test_pipeline.py      Offline pipeline and report tests
 ```

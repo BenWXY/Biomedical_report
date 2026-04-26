@@ -11,4 +11,6 @@ reports/*.html
 reports/*.md
 !reports/sample_HER2.md
 !reports/sample_HER2.html
+!reports/sample_HER2_offline.md
+!reports/sample_HER2_offline.html
 written_test.md
