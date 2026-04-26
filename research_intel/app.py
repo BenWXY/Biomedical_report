@@ -48,12 +48,14 @@ class IntelligencePipeline:
                     settings.pubmed_tool,
                 ),
             ]
-        analyzer = LLMReportAnalyzer(
-            api_key=settings.llm_api_key,
-            endpoint=settings.llm_endpoint,
-            model=settings.llm_model,
-            timeout_seconds=settings.llm_timeout_seconds,
-        )
+        analyzer = None
+        if not offline:
+            analyzer = LLMReportAnalyzer(
+                api_key=settings.llm_api_key,
+                endpoint=settings.llm_endpoint,
+                model=settings.llm_model,
+                timeout_seconds=settings.llm_timeout_seconds,
+            )
         pipeline = cls(settings, sources, analyzer)
         pipeline.cache = cache
         return pipeline

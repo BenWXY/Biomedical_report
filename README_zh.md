@@ -20,7 +20,7 @@
 
 - 支持 ClinicalTrials.gov v2 API 临床试验数据采集。
 - 支持 PubMed E-utilities 文献数据采集。
-- 内置 HER2 离线演示数据，便于无网络环境下测试。
+- 内置 HER2 离线演示数据，便于在不访问公开 API 和不调用 LLM 的情况下测试。
 - 使用可选 LLM 分析层生成靶点概述、在研管线概览、近期研究动态和竞争格局判断。
 - 输出 Markdown 和 HTML 报告。
 - HTML 报告会将 LLM 返回的常见 Markdown 格式转换为真正的 HTML。
@@ -75,7 +75,7 @@ $env:RESEARCH_INTEL_LLM_ENDPOINT="https://api.openai.com/v1"
 
 ## 离线演示
 
-使用内置 HER2 数据生成离线演示报告：
+使用内置 HER2 数据生成离线演示报告。离线模式只使用内置记录，不访问公开 API，也不会调用 LLM；即使已经配置 LLM API key，也不会在离线模式中使用。
 
 ```powershell
 python -m research_intel --target HER2 --offline --format both
@@ -88,7 +88,7 @@ reports/HER2_YYYYMMDD_HHMMSS.md
 reports/HER2_YYYYMMDD_HHMMSS.html
 ```
 
-项目中已包含 HER2 样例报告：`reports/sample_HER2.md` 和 `reports/sample_HER2.html`。
+项目中已包含 HER2 样例报告：`reports/sample_HER2_offline.md` 和 `reports/sample_HER2_offline.html` 是离线样例；`reports/sample_HER2.md` 和 `reports/sample_HER2.html` 是实时/在线数据源样例。
 
 ## 生成英文报告
 
@@ -122,7 +122,7 @@ $env:PUBMED_TOOL="research-intel-prototype"
 ## 常用命令选项
 
 - `--target HER2`：指定要研究的靶点或生物标志物。
-- `--offline`：使用内置演示数据，不访问外部 API。
+- `--offline`：使用内置演示数据，不访问外部 API，也不调用 LLM。
 - `--format markdown|html|both`：指定输出 Markdown、HTML 或两者都输出。
 - `--language chinese|english`：指定报告语言；省略时默认为 `chinese`。
 - `--verbose`：输出调试日志。
@@ -175,8 +175,12 @@ python -m unittest discover -s tests
 
 ```text
 .
+  .gitignore         Git 忽略规则
   pyproject.toml     包元数据和命令行入口配置
-  requirements.txt   运行时依赖列表
+  requirements.txt   pip 安装用运行时依赖列表
+  README.md          英文快速开始文档
+  README_detailed.md 英文详细文档
+  README_zh.md       中文文档
   written_test.md    原始项目需求说明
 research_intel/
   __init__.py        包标记文件
@@ -197,9 +201,11 @@ docs/
   architecture.md       英文系统设计文档
   architecture_zh.md    中文系统设计文档
 reports/
-  sample_HER2.md        Markdown 离线演示报告样例
-  sample_HER2.html      HTML 离线演示报告样例
+  sample_HER2.md        Markdown 实时/在线数据源报告样例
+  sample_HER2.html      HTML 实时/在线数据源报告样例
+  sample_HER2_offline.md / .html  离线演示报告样例
   *.md / *.html         生成的报告输出
+  *.sqlite3*            本地缓存和报告元数据数据库
 tests/
   test_pipeline.py      离线管线和报告测试
 ```

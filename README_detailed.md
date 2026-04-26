@@ -28,7 +28,7 @@ This prototype is designed for:
 - Medical or scientific affairs teams who want a structured summary instead of manually copying database results.
 - Evaluators or graders who want to see a complete working prototype with data collection, caching, reporting, tests, and documentation.
 
-You do not need medical training to run it. The included offline example uses HER2 and produces a sample report from built-in demo records.
+You do not need medical training to run it. The included offline example uses HER2 and produces sample Markdown and HTML reports from built-in demo records.
 
 ## Plain-English Glossary
 
@@ -44,7 +44,7 @@ You do not need medical training to run it. The included offline example uses HE
 ## Features
 
 - Searches public biomedical sources: ClinicalTrials.gov and PubMed.
-- Includes an offline HER2 demo so the project can be tested without internet access.
+- Includes an offline HER2 demo so the project can be tested without internet access or LLM calls.
 - Produces readable Markdown and HTML reports.
 - Converts common Markdown formatting from LLM-generated text into real HTML in `.html` reports.
 - Uses Chinese as the default report language, with an English option when requested.
@@ -80,7 +80,7 @@ Generate a demo report using built-in HER2 data:
 python -m research_intel --target HER2 --offline --format both
 ```
 
-This generates Chinese reports by default. To generate English reports instead:
+Offline mode is fully local and deterministic: it uses built-in records only and does not call public APIs or the LLM, even if an LLM API key is configured. This generates Chinese reports by default. To generate English reports instead:
 
 ```powershell
 python -m research_intel --target HER2 --offline --format both --language english
@@ -148,15 +148,17 @@ python -m research_intel --target HER2 --offline --format markdown
 Meaning:
 
 - `--target HER2` tells the app what biological topic to research.
-- `--offline` uses built-in demo data, which is useful for grading or testing without internet.
+- `--offline` uses built-in demo data, which is useful for grading or testing without internet or LLM calls.
 - `--format markdown` creates a Markdown report.
 - `--language chinese` or `--language english` controls report language. If omitted, the report is generated in Chinese.
 
 The included HER2 sample outputs are here:
 
 ```text
-reports/sample_HER2.md
-reports/sample_HER2.html
+reports/sample_HER2.md           # live/online sample Markdown report
+reports/sample_HER2.html         # live/online sample HTML report
+reports/sample_HER2_offline.md   # offline sample Markdown report
+reports/sample_HER2_offline.html # offline sample HTML report
 ```
 
 ## How To Read The Report
@@ -205,12 +207,18 @@ research-intel --target HER2 --offline --format markdown
 
 Add `--language english` to either command form when an English report is needed.
 
+Add `--verbose` when you need debug logging for source, cache, or pipeline behavior.
+
 ## Project Layout
 
 ```text
 .
+  .gitignore         Git ignore rules for local/runtime artifacts
   pyproject.toml     Package metadata and console script definition
-  requirements.txt   Runtime dependency list
+  requirements.txt   Runtime dependency list for pip installs
+  README.md          Main English quick-start documentation
+  README_detailed.md Detailed English documentation
+  README_zh.md       Chinese documentation
   written_test.md    Original project requirements
 research_intel/
   __init__.py        Package marker
@@ -231,9 +239,11 @@ docs/
   architecture.md       System design document
   architecture_zh.md    Chinese system design document
 reports/
-  sample_HER2.md        Example Markdown report generated from offline fixtures
-  sample_HER2.html      Example HTML report generated from offline fixtures
+  sample_HER2.md        Example Markdown report generated from live/online sources
+  sample_HER2.html      Example HTML report generated from live/online sources
+  sample_HER2_offline.md / .html  Example reports generated from offline fixtures
   *.md / *.html         Generated report outputs
+  *.sqlite3*            Local cache/report metadata databases
 tests/
   test_pipeline.py      Offline pipeline and report tests
 ```

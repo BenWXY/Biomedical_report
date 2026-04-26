@@ -92,6 +92,29 @@ class PipelineTests(unittest.TestCase):
             self.assertIn("Recent Research Dynamics", markdown)
             self.assertIn("Competitive Landscape Assessment", markdown)
 
+    def test_from_settings_offline_mode_does_not_use_llm(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = self.make_settings(Path(tmp))
+            settings = Settings(
+                cache_path=settings.cache_path,
+                reports_dir=settings.reports_dir,
+                timeout_seconds=settings.timeout_seconds,
+                cache_ttl_hours=settings.cache_ttl_hours,
+                pubmed_email=settings.pubmed_email,
+                pubmed_tool=settings.pubmed_tool,
+                max_trials=settings.max_trials,
+                max_publications=settings.max_publications,
+                llm_api_key="configured-key",
+                llm_endpoint=settings.llm_endpoint,
+                llm_model=settings.llm_model,
+                llm_timeout_seconds=settings.llm_timeout_seconds,
+            )
+            pipeline = IntelligencePipeline.from_settings(settings, offline=True)
+            result = pipeline.run("HER2", "markdown", "english")
+            self.assertIsNone(pipeline.analyzer)
+            self.assertNotIn("analysis_source", result.bundle.metadata)
+            self.assertNotIn("llm_analysis", result.bundle.metadata)
+
     def test_html_converts_markdown_from_llm_sections(self):
         with tempfile.TemporaryDirectory() as tmp:
             settings = self.make_settings(Path(tmp))

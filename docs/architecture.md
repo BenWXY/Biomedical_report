@@ -8,10 +8,10 @@ This project is a target-centric biomedical competitive intelligence prototype. 
 
 1. The CLI entrypoint receives a target, output format, language, and optional `--offline` / `--verbose` flags.
 2. `Settings.from_env()` loads cache paths, report paths, source limits, API timeouts, PubMed metadata, and optional LLM settings.
-3. `IntelligencePipeline.from_settings()` builds the cache, HTTP client, source list, LLM analyzer, and report renderer.
+3. `IntelligencePipeline.from_settings()` builds the cache, HTTP client, source list, optional LLM analyzer, and report renderer. In offline mode, the LLM analyzer is not created.
 4. Each configured `DataSource` fetches records for the target and returns a `SourceResult`.
 5. The pipeline separates records into `TrialRecord` and `PublicationRecord`, deduplicates them, and builds an `IntelligenceBundle`.
-6. `LLMReportAnalyzer` optionally sends the structured bundle to an OpenAI-compatible Chat Completions API through the OpenAI Python SDK.
+6. In live mode, `LLMReportAnalyzer` optionally sends the structured bundle to an OpenAI-compatible Chat Completions API through the OpenAI Python SDK.
 7. If LLM analysis succeeds, the four core report sections use the LLM output. If the key is missing or the call fails, the renderer uses deterministic local summaries.
 8. `ReportRenderer` writes Markdown, HTML, or both to `reports/`.
 9. `CacheStore.record_report()` stores report version metadata for traceability.
@@ -40,6 +40,8 @@ Offline mode replaces live sources with:
 
 - `OfflineDemoSource`: returns built-in HER2 records for deterministic local testing and grading.
 
+Offline mode is fully local: it does not call public APIs or the LLM, even when LLM credentials are configured.
+
 All sources implement:
 
 ```python
@@ -61,7 +63,7 @@ The default cache path is `.cache/research_intel.sqlite3`, but it can be changed
 
 ## 5. LLM Analysis
 
-The LLM layer is optional and only affects narrative report sections. It does not collect data.
+The LLM layer is optional and only affects narrative report sections. It does not collect data, and it is disabled for offline mode.
 
 `LLMReportAnalyzer` receives the final `IntelligenceBundle`, builds a structured prompt containing top trial and publication records, and calls:
 
@@ -104,7 +106,7 @@ The project favors graceful degradation:
 
 - Live API failures are captured as source warnings where possible.
 - Cache hits reduce repeated network dependency.
-- Offline mode provides deterministic no-network execution.
+- Offline mode provides deterministic no-network execution and skips LLM calls.
 - Missing or failing LLM configuration falls back to local summaries.
 - `--verbose` enables debug logging for troubleshooting source and pipeline behavior.
 
