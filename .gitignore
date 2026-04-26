@@ -10,4 +10,5 @@ qilu_venv/
 reports/*.html
 reports/*.md
 !reports/sample_HER2.md
+!reports/sample_HER2.html
 written_test.md

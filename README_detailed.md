@@ -152,10 +152,11 @@ Meaning:
 - `--format markdown` creates a Markdown report.
 - `--language chinese` or `--language english` controls report language. If omitted, the report is generated in Chinese.
 
-The included sample output is here:
+The included HER2 sample outputs are here:
 
 ```text
 reports/sample_HER2.md
+reports/sample_HER2.html
 ```
 
 ## How To Read The Report
@@ -230,7 +231,8 @@ docs/
   architecture.md       System design document
   architecture_zh.md    Chinese system design document
 reports/
-  sample_HER2.md        Example report generated from offline fixtures
+  sample_HER2.md        Example Markdown report generated from offline fixtures
+  sample_HER2.html      Example HTML report generated from offline fixtures
   *.md / *.html         Generated report outputs
 tests/
   test_pipeline.py      Offline pipeline and report tests

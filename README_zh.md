@@ -88,6 +88,8 @@ reports/HER2_YYYYMMDD_HHMMSS.md
 reports/HER2_YYYYMMDD_HHMMSS.html
 ```
 
+项目中已包含 HER2 样例报告：`reports/sample_HER2.md` 和 `reports/sample_HER2.html`。
+
 ## 生成英文报告
 
 中文是默认语言。如果用户明确要求英文报告，使用 `--language english`：
@@ -195,7 +197,8 @@ docs/
   architecture.md       英文系统设计文档
   architecture_zh.md    中文系统设计文档
 reports/
-  sample_HER2.md        离线演示报告样例
+  sample_HER2.md        Markdown 离线演示报告样例
+  sample_HER2.html      HTML 离线演示报告样例
   *.md / *.html         生成的报告输出
 tests/
   test_pipeline.py      离线管线和报告测试
