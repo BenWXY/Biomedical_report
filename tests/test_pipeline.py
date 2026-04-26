@@ -18,6 +18,16 @@ class FakeAnalyzer:
         }
 
 
+class MarkdownAnalyzer:
+    def analyze(self, bundle, language):
+        return {
+            "target_overview": "**HER2** overview with [source](https://example.com).",
+            "pipeline_overview": "- **Company A**: ADC program\n- Company B: antibody program",
+            "research_dynamics": "1. `Study one` signal\n2. Study two signal",
+            "competitive_assessment": "### Assessment\n- Risk: public records can lag.",
+        }
+
+
 class PipelineTests(unittest.TestCase):
     def make_settings(self, root: Path) -> Settings:
         return Settings(
@@ -81,6 +91,21 @@ class PipelineTests(unittest.TestCase):
             self.assertIn("Pipeline Overview", markdown)
             self.assertIn("Recent Research Dynamics", markdown)
             self.assertIn("Competitive Landscape Assessment", markdown)
+
+    def test_html_converts_markdown_from_llm_sections(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = self.make_settings(Path(tmp))
+            pipeline = IntelligencePipeline(settings, [OfflineDemoSource()], MarkdownAnalyzer())
+            result = pipeline.run("HER2", "html", "english")
+            html = result.report_paths[0].read_text(encoding="utf-8")
+            self.assertIn("<strong>HER2</strong>", html)
+            self.assertIn('<a href="https://example.com">source</a>', html)
+            self.assertIn("<ul>", html)
+            self.assertIn("<li><strong>Company A</strong>: ADC program</li>", html)
+            self.assertIn("<ol>", html)
+            self.assertIn("<code>Study one</code>", html)
+            self.assertIn("<h3>Assessment</h3>", html)
+            self.assertNotIn("<p>- **Company A**: ADC program</p>", html)
 
 
 if __name__ == "__main__":

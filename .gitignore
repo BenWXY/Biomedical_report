@@ -8,6 +8,6 @@ qilu_venv/
 *.sqlite3.json
 .cache/
 reports/*.html
-reports/HER2_*.md
-reports/PD_L1_*.md
+reports/*.md
+!reports/sample_HER2.md
 written_test.md

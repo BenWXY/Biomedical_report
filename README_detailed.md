@@ -1,6 +1,6 @@
 # Research Intelligence Prototype
 
-Chinese documentation is available in [README_zh.md](README_zh.md).
+Chinese documentation is available in [README_zh.md](README_zh.md). Architecture docs are available in English [architecture.md](docs/architecture.md) and Chinese [architecture_zh.md](docs/architecture_zh.md).
 
 This project is a small Python application that helps answer a practical question:
 
@@ -18,7 +18,7 @@ The program collects and summarizes three kinds of information:
 - **Scientific papers**: Published research articles. The app can search PubMed and extract article title, journal, date, authors, and PubMed link.
 - **Simple competitive view**: A short analysis showing which companies appear active, how mature the trial pipeline is, and what opportunities or risks may exist.
 
-The output is a report in `Markdown` and/or `HTML`, so it can be opened in a text editor, browser, or converted to PDF later.
+The output is a report in `Markdown` and/or `HTML`, so it can be opened in a text editor, browser, or converted to PDF later. When the LLM returns Markdown-style prose, the HTML renderer converts common formatting such as headings, bullets, numbered lists, links, bold text, italics, and inline code into HTML.
 
 ## Who This Is For
 
@@ -46,6 +46,7 @@ You do not need medical training to run it. The included offline example uses HE
 - Searches public biomedical sources: ClinicalTrials.gov and PubMed.
 - Includes an offline HER2 demo so the project can be tested without internet access.
 - Produces readable Markdown and HTML reports.
+- Converts common Markdown formatting from LLM-generated text into real HTML in `.html` reports.
 - Uses Chinese as the default report language, with an English option when requested.
 - Uses an optional LLM analysis layer to summarize the collected data into the four main report sections.
 - Adds simple charts for trial phases and publication years.
@@ -170,6 +171,25 @@ Each generated report has these sections:
 
 The report is not a medical recommendation. It is a research-assistant output meant to help an analyst start faster.
 
+## Adding More Data Sources
+
+The project is designed around small pluggable collectors. Each collector implements the `DataSource` interface from `research_intel/sources/base.py` and returns a `SourceResult`.
+
+To add another source:
+
+1. Create a new file in `research_intel/sources/`, for example `fda.py` or `conference.py`.
+2. Define a source class with a clear `name`.
+3. Implement `fetch(target: str) -> SourceResult`.
+4. Query the external API, local file, or internal dataset for the requested target.
+5. Normalize each result into the existing models in `research_intel/models.py`, usually `TrialRecord` for trial-like records or `PublicationRecord` for paper-like records.
+6. Include warnings for partial data, API errors, rate limits, or unsupported fields.
+7. Register the source in `research_intel/sources/__init__.py` if it should be imported from the package.
+8. Add the source to the non-offline `sources` list in `IntelligencePipeline.from_settings()`.
+
+Good next source candidates are FDA approvals and labels, EMA/NMPA regulatory records, ASCO/ESMO conference abstracts, patent databases, and company pipeline pages.
+
+The current report pipeline only renders clinical trial and publication records directly. If a new source produces a different kind of information, such as drug approvals or patents, either map it to the closest existing record type for an early prototype or add a new model and update `IntelligencePipeline` plus `ReportRenderer` to carry and display the new section.
+
 ## Tests
 
 ```powershell
@@ -187,7 +207,12 @@ Add `--language english` to either command form when an English report is needed
 ## Project Layout
 
 ```text
+.
+  pyproject.toml     Package metadata and console script definition
+  requirements.txt   Runtime dependency list
+  written_test.md    Original project requirements
 research_intel/
+  __init__.py        Package marker
   __main__.py        CLI entrypoint
   app.py             Pipeline orchestration
   cache.py           SQLite cache and report versions
@@ -197,11 +222,18 @@ research_intel/
   models.py          Normalized dataclasses
   report.py          Markdown/HTML report renderer
   sources/           Pluggable collectors
+    base.py              DataSource interface
+    clinical_trials.py   ClinicalTrials.gov collector
+    offline.py           Built-in demo fixture source
+    pubmed.py            PubMed collector
 docs/
-  architecture.md    System design document
+  architecture.md       System design document
+  architecture_zh.md    Chinese system design document
 reports/
-  sample_HER2.md     Example report generated from offline fixtures
+  sample_HER2.md        Example report generated from offline fixtures
+  *.md / *.html         Generated report outputs
 tests/
+  test_pipeline.py      Offline pipeline and report tests
 ```
 
 ## Current Limitations
