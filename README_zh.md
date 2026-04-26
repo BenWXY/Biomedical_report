@@ -4,6 +4,10 @@
 
 报告默认使用中文生成。如需英文报告，可以在命令中加入 `--language english`。如果配置了 LLM API key，报告四个核心章节会优先使用 LLM 对采集数据的分析与归纳；如果未配置或调用失败，则自动回退到本地规则化摘要。
 
+架构文档：中文 [architecture_zh.md](docs/architecture_zh.md) / English [architecture.md](docs/architecture.md)。
+
+更详细的英文说明见 [README_detailed.md](README_detailed.md)。
+
 ## 项目用途
 
 当研发、战略或医学团队关注一个靶点时，通常需要快速回答：
@@ -19,6 +23,7 @@
 - 内置 HER2 离线演示数据，便于无网络环境下测试。
 - 使用可选 LLM 分析层生成靶点概述、在研管线概览、近期研究动态和竞争格局判断。
 - 输出 Markdown 和 HTML 报告。
+- HTML 报告会将 LLM 返回的常见 Markdown 格式转换为真正的 HTML。
 - 默认生成中文报告，并保留英文报告选项。
 - 在报告中嵌入简单 SVG 图表，展示试验阶段分布和文献发表趋势。
 - 使用 SQLite 缓存查询结果，并记录报告版本元数据。
@@ -137,6 +142,27 @@ research-intel --target HER2 --offline --format markdown
 
 报告不是医疗建议，而是帮助分析人员更快开始研究的辅助输出。
 
+如果 LLM 返回的正文中包含 Markdown 风格内容，HTML 报告会转换常见格式，包括标题、项目符号列表、编号列表、链接、粗体、斜体和行内代码。
+
+## 添加更多数据源
+
+项目通过 `research_intel/sources/base.py` 中的 `DataSource` 接口扩展数据源。每个数据源需要实现 `fetch(target: str) -> SourceResult`，并把外部数据转换成 `research_intel/models.py` 中的标准记录。
+
+添加新数据源的一般步骤：
+
+1. 在 `research_intel/sources/` 下创建新的模块，例如 `fda.py`、`conference.py` 或 `patent.py`。
+2. 定义一个数据源类，设置清晰的 `name`。
+3. 实现 `fetch(target: str) -> SourceResult`。
+4. 在 `fetch` 中查询外部 API、本地文件或内部数据集。
+5. 将结果转换为现有模型，通常是 `TrialRecord` 或 `PublicationRecord`。
+6. 对 API 错误、字段缺失、限流或部分结果，在 `warnings` 中说明。
+7. 如果需要从包级别导入，在 `research_intel/sources/__init__.py` 中注册。
+8. 在 `IntelligencePipeline.from_settings()` 的非离线 `sources` 列表中加入新的数据源。
+
+适合后续扩展的数据源包括 FDA 批准和说明书、EMA/NMPA 监管记录、ASCO/ESMO 会议摘要、专利数据库、公司管线页面和新闻稿。
+
+当前管线会直接汇总和渲染 `TrialRecord` 与 `PublicationRecord`。如果新数据源返回的是批准、专利或会议等新类型信息，可以先映射到最接近的现有记录类型；如果需要更正式的结构，则应新增模型，并同步更新 `IntelligencePipeline` 和 `ReportRenderer`。
+
 ## 运行测试
 
 ```powershell
@@ -146,7 +172,12 @@ python -m unittest discover -s tests
 ## 项目结构
 
 ```text
+.
+  pyproject.toml     包元数据和命令行入口配置
+  requirements.txt   运行时依赖列表
+  written_test.md    原始项目需求说明
 research_intel/
+  __init__.py        包标记文件
   __main__.py        CLI 入口
   app.py             管线编排
   cache.py           SQLite 缓存和报告版本记录
@@ -156,11 +187,18 @@ research_intel/
   models.py          标准化数据模型
   report.py          Markdown/HTML 报告渲染器
   sources/           可插拔数据采集器
+    base.py              DataSource 接口
+    clinical_trials.py   ClinicalTrials.gov 数据采集器
+    offline.py           内置离线演示数据源
+    pubmed.py            PubMed 数据采集器
 docs/
-  architecture.md    系统设计文档
+  architecture.md       英文系统设计文档
+  architecture_zh.md    中文系统设计文档
 reports/
-  sample_HER2.md     离线演示报告样例
+  sample_HER2.md        离线演示报告样例
+  *.md / *.html         生成的报告输出
 tests/
+  test_pipeline.py      离线管线和报告测试
 ```
 
 ## 当前限制

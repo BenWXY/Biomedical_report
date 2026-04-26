@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import re
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -417,39 +418,96 @@ class ReportRenderer:
         lines = markdown.splitlines()
         html_lines: List[str] = []
         in_table = False
+        in_ul = False
+        in_ol = False
+        in_svg = False
+
+        def close_table() -> None:
+            nonlocal in_table
+            if in_table:
+                html_lines.append("</table>")
+                in_table = False
+
+        def close_lists() -> None:
+            nonlocal in_ul, in_ol
+            if in_ul:
+                html_lines.append("</ul>")
+                in_ul = False
+            if in_ol:
+                html_lines.append("</ol>")
+                in_ol = False
+
+        def close_blocks() -> None:
+            close_table()
+            close_lists()
+
         for line in lines:
-            if line.startswith("<svg") or line.startswith("<text") or line.startswith("<rect") or line == "</svg>":
+            stripped = line.strip()
+            if in_svg:
                 html_lines.append(line)
-            elif line.startswith("# "):
-                html_lines.append(f"<h1>{html.escape(line[2:])}</h1>")
-            elif line.startswith("## "):
-                html_lines.append(f"<h2>{html.escape(line[3:])}</h2>")
-            elif line.startswith("| ") and line.endswith(" |"):
-                cells = [cell.strip() for cell in line.strip("|").split("|")]
+                if stripped == "</svg>":
+                    in_svg = False
+                continue
+            if stripped.startswith("<svg"):
+                close_blocks()
+                in_svg = True
+                html_lines.append(line)
+            elif not stripped:
+                close_blocks()
+            elif stripped.startswith("#"):
+                close_blocks()
+                marker, _, text = stripped.partition(" ")
+                if 1 <= len(marker) <= 4 and set(marker) == {"#"} and text:
+                    level = len(marker)
+                    html_lines.append(f"<h{level}>{self._inline_markdown_to_html(text)}</h{level}>")
+                else:
+                    html_lines.append(f"<p>{self._inline_markdown_to_html(stripped)}</p>")
+            elif stripped.startswith("| ") and stripped.endswith(" |"):
+                close_lists()
+                cells = [cell.strip() for cell in stripped.strip("|").split("|")]
                 if all(set(cell) <= {"-", ":", " "} for cell in cells):
                     continue
                 tag = "th" if not in_table else "td"
                 if not in_table:
                     html_lines.append("<table>")
                     in_table = True
-                html_lines.append("<tr>" + "".join(f"<{tag}>{self._markdown_links(cell)}</{tag}>" for cell in cells) + "</tr>")
+                html_lines.append("<tr>" + "".join(f"<{tag}>{self._inline_markdown_to_html(cell)}</{tag}>" for cell in cells) + "</tr>")
+            elif stripped.startswith(("- ", "* ")):
+                close_table()
+                if in_ol:
+                    html_lines.append("</ol>")
+                    in_ol = False
+                if not in_ul:
+                    html_lines.append("<ul>")
+                    in_ul = True
+                html_lines.append(f"<li>{self._inline_markdown_to_html(stripped[2:].strip())}</li>")
+            elif re.match(r"^\d+\.\s+", stripped):
+                close_table()
+                if in_ul:
+                    html_lines.append("</ul>")
+                    in_ul = False
+                if not in_ol:
+                    html_lines.append("<ol>")
+                    in_ol = True
+                item = re.sub(r"^\d+\.\s+", "", stripped, count=1)
+                html_lines.append(f"<li>{self._inline_markdown_to_html(item)}</li>")
             else:
-                if in_table:
-                    html_lines.append("</table>")
-                    in_table = False
-                if line.startswith("- "):
-                    html_lines.append(f"<p>{html.escape(line)}</p>")
-                elif line:
-                    html_lines.append(f"<p>{self._markdown_links(line)}</p>")
-        if in_table:
-            html_lines.append("</table>")
+                close_blocks()
+                html_lines.append(f"<p>{self._inline_markdown_to_html(stripped)}</p>")
+        close_blocks()
         return "\n".join(html_lines)
 
-    def _markdown_links(self, text: str) -> str:
-        if text.startswith("[") and "](" in text and text.endswith(")"):
-            label, url = text[1:].split("](", 1)
-            return f'<a href="{html.escape(url[:-1])}">{html.escape(label)}</a>'
-        return html.escape(text)
+    def _inline_markdown_to_html(self, text: str) -> str:
+        rendered = html.escape(text)
+        rendered = re.sub(
+            r"\[([^\]]+)\]\(([^)]+)\)",
+            lambda match: f'<a href="{match.group(2)}">{match.group(1)}</a>',
+            rendered,
+        )
+        rendered = re.sub(r"`([^`]+)`", r"<code>\1</code>", rendered)
+        rendered = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", rendered)
+        rendered = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<em>\1</em>", rendered)
+        return rendered
 
     def _link(self, label: str, url: str) -> str:
         if not url:
