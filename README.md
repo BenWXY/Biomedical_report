@@ -42,7 +42,7 @@ Generate a deterministic offline demo report:
 python -m research_intel --target HER2 --offline --format both
 ```
 
-Generated files are written to `reports/`. Reports are generated in Chinese by default.
+Generated files are written to `reports/`. Reports are generated in Chinese by default. Sample HER2 reports are included at `reports/sample_HER2.md` and `reports/sample_HER2.html`.
 
 To generate the report in English, pass `--language english`:
 
@@ -147,7 +147,8 @@ docs/
   architecture.md       System design document
   architecture_zh.md    Chinese system design document
 reports/
-  sample_HER2.md        Example report generated from offline fixtures
+  sample_HER2.md        Example Markdown report generated from offline fixtures
+  sample_HER2.html      Example HTML report generated from offline fixtures
   *.md / *.html         Generated report outputs
 tests/
   test_pipeline.py      Offline pipeline and report tests
